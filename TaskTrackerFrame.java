@@ -24,157 +24,177 @@ public class TaskTrackerFrame extends JFrame implements LanguageChangeListener {
     private JLabel helloLabel;
     private JLabel progressTextLabel;
     private JButton settingsButton;
-    private JPopupMenu settingsMenu;
     private JButton statsButton;
     private JButton addTaskButton;
-    private JRadioButton darkBtn;
-    private JRadioButton lightBtn;
+    private JButton viewAllTasksButton;
 
+
+    private JPopupMenu settingsMenu;
     private JMenuItem helpItem;
     private JMenuItem languageLabel;
     private JMenuItem englishItem;
     private JMenuItem finnishItem;
     private JLabel dateLabel;
+    private JRadioButtonMenuItem darkItem;
+    private JRadioButtonMenuItem lightItem;
+    private JMenuItem themeLabel;
 
     private LocalizationManager lang;
-    
 
     public TaskTrackerFrame(String userName) {
 
-        lang = LocalizationManager.getInstance();
-        lang.addListener(this);
+    lang = LocalizationManager.getInstance();
+    lang.addListener(this);
 
-        this.userName = userName;
+    this.userName = userName;
 
-        setTitle(lang.getString("app.title"));
-        setSize(900, 500);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
+    setTitle(lang.getString("app.title"));
+    setSize(900, 500);
+    setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    setLocationRelativeTo(null);
 
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-      
-        JPanel topPanel = new JPanel(new BorderLayout());
+    JPanel topPanel = new JPanel(new BorderLayout());
 
-     
-        helloLabel = new JLabel(lang.getString("app.welcome") + " " + userName + "!");
-        topPanel.add(helloLabel, BorderLayout.NORTH);
+    JPanel headerPanel = new JPanel(new BorderLayout());
 
-      
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        leftPanel.setOpaque(false);
+    helloLabel = new JLabel(lang.getString("app.welcome") + " " + userName + "!");
+    headerPanel.add(helloLabel, BorderLayout.WEST);
 
-        statsButton = new JButton(lang.getString("button.view_stats"));
-        statsButton.addActionListener(e -> new StatisticsWindow());
+    JPanel headerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    headerRight.setOpaque(false);
 
-        switchModeButton = new JButton(lang.getString("mode.predefined"));
-        switchModeButton.addActionListener(e -> toggleMode());
+    LocalDate currentDate = LocalDate.now();
+    String formattedDate = currentDate.format(
+            DateTimeFormatter.ofPattern("EEEE, d MMMM, yyyy")
+    );
+    dateLabel = new JLabel("📅 " + formattedDate);
 
-        addTaskButton = new JButton(lang.getString("button.add_task"));
-        addTaskButton.addActionListener(e -> showAddTaskDialog());
+    settingsButton = new JButton("⚙");
 
-        darkBtn = new JRadioButton(lang.getString("button.dark_mode"));
-        lightBtn = new JRadioButton(lang.getString("button.light_mode"));
+    settingsMenu = new JPopupMenu();
 
-        ButtonGroup group = new ButtonGroup();
-        group.add(darkBtn);
-        group.add(lightBtn);
+    englishItem = new JMenuItem("EN");
+    finnishItem = new JMenuItem("FI");
 
-        darkBtn.addActionListener(e -> {
-            isDarkMode = true;
-            applyTheme(mainPanel, true);
-        });
+    englishItem.addActionListener(e -> lang.setLocale(Locale.ENGLISH));
+    finnishItem.addActionListener(e -> lang.setLocale(new Locale("fi")));
 
-        lightBtn.addActionListener(e -> {
-            isDarkMode = false;
-            applyTheme(mainPanel, false);
-        });
+    languageLabel = new JMenuItem("🌐 " + lang.getString("settings.language"));
+    languageLabel.setEnabled(false);
 
-        leftPanel.add(statsButton);
-        leftPanel.add(switchModeButton);
-        leftPanel.add(addTaskButton);
-        leftPanel.add(darkBtn);
-        leftPanel.add(lightBtn);
+    settingsMenu.add(languageLabel);
+    settingsMenu.add(englishItem);
+    settingsMenu.add(finnishItem);
+    settingsMenu.addSeparator();
 
-       
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rightPanel.setOpaque(false);
+    settingsMenu.addSeparator();
+
+
+    themeLabel = new JMenuItem("🎨 " + lang.getString("settings.theme"));
+    themeLabel.setEnabled(false);
+    settingsMenu.add(themeLabel);
+
+     darkItem = new JRadioButtonMenuItem("🌙 " + lang.getString("button.dark_mode"));
+     lightItem = new JRadioButtonMenuItem("☀ " + lang.getString("button.light_mode"));
+
+    ButtonGroup themeGroup = new ButtonGroup();
+    themeGroup.add(darkItem);
+    themeGroup.add(lightItem);
+
+
+    darkItem.setSelected(isDarkMode);
+    lightItem.setSelected(!isDarkMode);
+
+    darkItem.addActionListener(e -> {
+    isDarkMode = true;
+    ThemeManager.applyTheme(mainPanel, true);
+    });
+
+    lightItem.addActionListener(e -> {
+    isDarkMode = false;
+    ThemeManager.applyTheme(mainPanel, false);
+    });
+
+    settingsMenu.add(darkItem);
+    settingsMenu.add(lightItem);
+
+    settingsMenu.addSeparator();
 
     
-        LocalDate currentDate = LocalDate.now();
-        String formattedDate = currentDate.format(
-                DateTimeFormatter.ofPattern("EEEE, d MMMM, yyyy")
-        );
-        dateLabel = new JLabel("📅 " + formattedDate);
+    helpItem = new JMenuItem(lang.getString("settings.help"));
+    helpItem.addActionListener(e -> showHelpDialog());
+    settingsMenu.add(helpItem);
 
-       
-        settingsButton = new JButton("⚙");
+    settingsButton.addActionListener(e -> {
+    ThemeManager.applyTheme(settingsMenu, isDarkMode);
+    settingsMenu.show(settingsButton, 0, settingsButton.getHeight());
+    });
 
-        settingsMenu = new JPopupMenu();
+    headerRight.add(dateLabel);
+    headerRight.add(settingsButton);
 
-        englishItem = new JMenuItem("EN");
-        finnishItem = new JMenuItem("FI");
+    headerPanel.add(headerRight, BorderLayout.EAST);
+    topPanel.add(headerPanel, BorderLayout.NORTH);
 
-        englishItem.addActionListener(e -> lang.setLocale(Locale.ENGLISH));
-        finnishItem.addActionListener(e -> lang.setLocale(new Locale("fi")));
+    
+    JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    actionPanel.setOpaque(false);
 
-        languageLabel = new JMenuItem("🌐 " + lang.getString("settings.language"));
-        languageLabel.setEnabled(false);
- 
-        settingsMenu.add(languageLabel);
-        settingsMenu.add(englishItem);
-        settingsMenu.add(finnishItem);
-        settingsMenu.addSeparator();
+    statsButton = new JButton(lang.getString("button.view_stats"));
+    statsButton.addActionListener(e -> new StatisticsWindow(isDarkMode));
 
-        helpItem = new JMenuItem(lang.getString("settings.help"));
-        helpItem.addActionListener(e -> showHelpDialog());
-        settingsMenu.add(helpItem);
+    switchModeButton = new JButton(lang.getString("mode.predefined"));
+    switchModeButton.addActionListener(e -> toggleMode());
 
-        settingsButton.addActionListener(e ->
-                settingsMenu.show(settingsButton, 0, settingsButton.getHeight())
-        );
+    addTaskButton = new JButton(lang.getString("button.add_task"));
+    addTaskButton.addActionListener(e -> showAddTaskDialog());
 
-        rightPanel.add(dateLabel);
-        rightPanel.add(settingsButton);
 
-     
-        topPanel.add(leftPanel, BorderLayout.WEST);
-        topPanel.add(rightPanel, BorderLayout.EAST);
+    viewAllTasksButton = new JButton("View all tasks");
+    viewAllTasksButton.addActionListener(e -> showAllTasksDialog());
 
-      
-        JPanel progressPanel = new JPanel(new BorderLayout());
+    actionPanel.add(statsButton);
+    actionPanel.add(switchModeButton);
+    actionPanel.add(addTaskButton);
+    actionPanel.add(viewAllTasksButton);
 
-        levelLabel = new JLabel(lang.getString("app.level") + ": " + currentLevel);
-        levelLabel.setHorizontalAlignment(JLabel.CENTER);
+    topPanel.add(actionPanel, BorderLayout.CENTER);
 
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setStringPainted(true);
+    
+    JPanel progressPanel = new JPanel(new BorderLayout());
 
-        progressTextLabel = new JLabel(lang.getString("app.progress"));
+    levelLabel = new JLabel(lang.getString("app.level") + ": " + currentLevel);
+    levelLabel.setHorizontalAlignment(JLabel.CENTER);
 
-        progressPanel.add(levelLabel, BorderLayout.NORTH);
-        progressPanel.add(progressTextLabel, BorderLayout.CENTER);
-        progressPanel.add(progressBar, BorderLayout.SOUTH);
+    progressBar = new JProgressBar(0, 100);
+    progressBar.setStringPainted(true);
 
-      
-        tasksPanel = new JPanel(new GridBagLayout());
-        taskStatusLabel = new JLabel(lang.getString("app.complete_tasks"));
+    progressTextLabel = new JLabel(lang.getString("app.progress"));
 
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(progressPanel, BorderLayout.NORTH);
-        centerPanel.add(tasksPanel, BorderLayout.CENTER);
-        centerPanel.add(taskStatusLabel, BorderLayout.SOUTH);
+    progressPanel.add(levelLabel, BorderLayout.NORTH);
+    progressPanel.add(progressTextLabel, BorderLayout.CENTER);
+    progressPanel.add(progressBar, BorderLayout.SOUTH);
 
-        mainPanel.add(topPanel, BorderLayout.NORTH);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
+    tasksPanel = new JPanel(new GridBagLayout());
+    taskStatusLabel = new JLabel(lang.getString("app.complete_tasks"));
 
-        add(mainPanel);
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.add(progressPanel, BorderLayout.NORTH);
+    centerPanel.add(tasksPanel, BorderLayout.CENTER);
+    centerPanel.add(taskStatusLabel, BorderLayout.SOUTH);
 
-        createTasksForCurrentLevel();
+    mainPanel.add(topPanel, BorderLayout.NORTH);
+    mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-        setVisible(true);
-    }
+    add(mainPanel);
+
+    createTasksForCurrentLevel();
+
+    setVisible(true);
+}
 
 
     private void toggleMode() {
@@ -187,6 +207,96 @@ public class TaskTrackerFrame extends JFrame implements LanguageChangeListener {
         levelLabel.setText(lang.getString("app.level") + ": " + currentLevel);
         createTasksForCurrentLevel();
     }
+
+   private void showAllTasksDialog() {
+
+    JTextArea area = new JTextArea(20, 40);
+    area.setEditable(false);
+
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("PREDEFINED TASKS:\n");
+    sb.append("------------------\n");
+
+    for (String task : AppData.taskKeys) {
+        sb.append("• ").append(lang.getString(task)).append("\n");
+    }
+
+    sb.append("\nCUSTOM TASKS:\n");
+    sb.append("------------------\n");
+
+    if (AppData.customTasks.isEmpty()) {
+        sb.append("No custom tasks\n");
+    } else {
+        for (String task : AppData.customTasks) {
+            sb.append("• ").append(task).append("\n");
+        }
+    }
+
+    area.setText(sb.toString());
+
+  
+    if (isDarkMode) {
+        area.setBackground(new Color(30, 30, 30));
+        area.setForeground(Color.WHITE);
+        area.setCaretColor(Color.WHITE);
+    } else {
+        area.setBackground(Color.WHITE);
+        area.setForeground(Color.BLACK);
+        area.setCaretColor(Color.BLACK);
+    }
+
+    JScrollPane scrollPane = new JScrollPane(area);
+
+    if (isDarkMode) {
+        scrollPane.getViewport().setBackground(new Color(30, 30, 30));
+    } else {
+        scrollPane.getViewport().setBackground(Color.WHITE);
+    }
+
+   
+    JDialog dialog = new JDialog(this, "All Tasks", true);
+    dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    dialog.setLayout(new BorderLayout());
+
+   
+    dialog.add(scrollPane, BorderLayout.CENTER);
+
+  
+    JButton closeButton = new JButton("Close");
+
+    if (isDarkMode) {
+        closeButton.setBackground(new Color(70, 70, 70));
+        closeButton.setForeground(Color.WHITE);
+    } else {
+        closeButton.setBackground(new Color(220, 220, 220));
+        closeButton.setForeground(Color.BLACK);
+    }
+
+    closeButton.addActionListener(e -> dialog.dispose());
+
+    JPanel buttonPanel = new JPanel();
+
+    if (isDarkMode) {
+        buttonPanel.setBackground(new Color(45, 45, 45));
+    } else {
+        buttonPanel.setBackground(Color.WHITE);
+    }
+
+    buttonPanel.add(closeButton);
+
+    dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+    if (isDarkMode) {
+        dialog.getContentPane().setBackground(new Color(45, 45, 45));
+    } else {
+        dialog.getContentPane().setBackground(Color.WHITE);
+    }
+
+    dialog.setSize(500, 400);
+    dialog.setLocationRelativeTo(this);
+    dialog.setVisible(true);
+}
 
     private void showHelpDialog() {
     JTextArea area = new JTextArea(15, 40);
@@ -206,15 +316,20 @@ public class TaskTrackerFrame extends JFrame implements LanguageChangeListener {
 
     area.setText(helpText);
 
-    JOptionPane.showMessageDialog(
-            this,
-            new JScrollPane(area),
-            lang.getString("help.title"),
-            JOptionPane.INFORMATION_MESSAGE
+    JScrollPane scrollPane = new JScrollPane(area);
+    ThemeManager.applyTheme(scrollPane, isDarkMode);
+
+    JOptionPane optionPane = new JOptionPane(
+    scrollPane,
+    JOptionPane.INFORMATION_MESSAGE
     );
+
+    JDialog dialog = optionPane.createDialog(this, lang.getString("help.title"));
+    ThemeManager.applyTheme(dialog.getContentPane(), isDarkMode);
+    dialog.setVisible(true);
 }
 
- @Override
+@Override
 public void onLanguageChanged() {
 
    
@@ -229,8 +344,7 @@ public void onLanguageChanged() {
   
     statsButton.setText(lang.getString("button.view_stats"));
     addTaskButton.setText(lang.getString("button.add_task"));
-    darkBtn.setText(lang.getString("button.dark_mode"));
-    lightBtn.setText(lang.getString("button.light_mode"));
+    
 
    
     if (usePredefinedTasks) {
@@ -242,7 +356,9 @@ public void onLanguageChanged() {
    
     languageLabel.setText("🌐 " + lang.getString("settings.language"));
     helpItem.setText(lang.getString("settings.help"));
-
+    darkItem.setText("🌙 " + lang.getString("button.dark_mode"));
+    lightItem.setText("☀ " + lang.getString("button.light_mode"));
+    themeLabel.setText("🎨 " + lang.getString("settings.theme"));
     
 
   
@@ -275,7 +391,7 @@ public void onLanguageChanged() {
       
         List<String> currentTasks;
         if (usePredefinedTasks) {
-            currentTasks = AppData.taskNames;
+            currentTasks = AppData.taskKeys;
         } else {
             currentTasks = AppData.customTasks;
 
@@ -324,7 +440,9 @@ public void onLanguageChanged() {
                 constraints.weightx = 0.7;
 
               
-                taskLabels[i] = new JLabel(currentTasks.get(taskNumber) + " - " + lang.getString("task.pending"));
+                String taskKey = currentTasks.get(taskNumber); 
+                taskLabels[i] = new JLabel(lang.getString(taskKey) + " - " + lang.getString("task.pending"));
+
 
                 if (!usePredefinedTasks) {
                     taskLabels[i].setForeground(new Color(0, 128, 0)); 
@@ -336,7 +454,14 @@ public void onLanguageChanged() {
                 constraints.gridx = 1;
                 constraints.weightx = 0.3;
 
-                taskButtons[i] = new JButton(lang.getString("task.start") + " " + currentTasks.get(taskNumber));
+              String taskText;
+            
+              if (usePredefinedTasks) {
+                  taskText = lang.getString(currentTasks.get(taskNumber));
+                  } else {
+                     taskText = currentTasks.get(taskNumber);
+                    }       
+                taskButtons[i] = new JButton(lang.getString("task.start") + " " + taskText);
 
                
                 int finalI = i;
@@ -358,7 +483,7 @@ public void onLanguageChanged() {
         tasksPanel.repaint();
 
       
-        applyTheme(tasksPanel, isDarkMode);
+        ThemeManager.applyTheme(tasksPanel, isDarkMode);
     }
 
  private void completeTask(int taskIndex, int taskNumber, JLabel taskLabel, List<String> taskSource) {
@@ -370,7 +495,8 @@ public void onLanguageChanged() {
             progressBar.setValue(taskProgress);
 
            
-            taskLabel.setText(taskSource.get(taskNumber) + "- " + lang.getString("task.completed"));
+            String taskKey = taskSource.get(taskNumber);
+            taskLabel.setText(lang.getString(taskKey) + " - " + lang.getString("task.completed"));
             taskButtons[taskIndex].setEnabled(false);
 
           
@@ -395,7 +521,8 @@ public void onLanguageChanged() {
                  taskType = "[" + lang.getString("task.custom_prefix") + "] ";
             }
 
-            AppData.dailyCompletedTasks.get(today).add(taskType + taskSource.get(taskNumber));
+
+            AppData.dailyCompletedTasks.get(today).add(taskType + lang.getString(taskKey));
 
           
             if (taskProgress >= 100) {
@@ -416,7 +543,7 @@ public void onLanguageChanged() {
        
         List<String> currentTasks;
         if (usePredefinedTasks) {
-            currentTasks = AppData.taskNames;
+            currentTasks = AppData.taskKeys;
         } else {
             currentTasks = AppData.customTasks;
         }
@@ -473,7 +600,7 @@ public void onLanguageChanged() {
                 String taskName = taskNameField.getText().trim();
                 if (!taskName.isEmpty()) {
                     AppData.customTasks.add(taskName);
-                    JOptionPane.showMessageDialog(addTaskFrame, lang.getString("dialog.task_name") + taskName + lang.getString("dialog.task_added"), "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(addTaskFrame, lang.getString("dialog.task_added"), lang.getString("dialog.success"), JOptionPane.INFORMATION_MESSAGE);
                     addTaskFrame.dispose();
 
                     currentLevel = 1;
@@ -493,60 +620,11 @@ public void onLanguageChanged() {
             panel.add(cancelButton, gbc);
 
             addTaskFrame.add(panel);
-            applyTheme(panel, isDarkMode);
+            ThemeManager.applyTheme(panel, isDarkMode);
             addTaskFrame.setVisible(true);
             
         } else {
             JOptionPane.showMessageDialog(this, lang.getString("dialog.wrong_mode"), lang.getString("error.message_wrong_mode"), JOptionPane.ERROR_MESSAGE);
         }
     }
-
-private static void applyTheme(Container container, boolean darkMode) {
-   
-    Color backGround;
-    Color foreGround;
-    Color buttonBackGround;
-    Color fieldBackGround; 
-
-    if (darkMode) {
-        backGround = new Color(45, 45, 45);
-        foreGround = Color.WHITE;
-        buttonBackGround = new Color(70, 70, 70);
-        fieldBackGround = new Color(30, 30, 30); 
-    } else {
-        backGround = Color.WHITE;
-        foreGround = Color.BLACK;
-        buttonBackGround = new Color(220, 220, 220);
-        fieldBackGround = Color.WHITE;
-    }
-
-    container.setBackground(backGround);
-
-  
-    for (Component comp : container.getComponents()) {
-      
-        comp.setForeground(foreGround);
-
-        if (comp instanceof JPanel) {
-           
-            comp.setBackground(backGround);
-            applyTheme((Container) comp, darkMode);
-        } else if (comp instanceof JButton) {
-          
-            comp.setBackground(buttonBackGround);
-        } else if (comp instanceof JTextField) {
-           
-            comp.setBackground(fieldBackGround);
-            ((JTextField) comp).setCaretColor(foreGround);
-        } else if (comp instanceof JRadioButton) {
-           
-            comp.setBackground(backGround);
-            ((JRadioButton) comp).setOpaque(true);
-        } else if (comp instanceof JProgressBar) {
-         
-            comp.setBackground(backGround);
-            comp.setForeground(Color.GREEN);
-        }
-    }
-}
 }
