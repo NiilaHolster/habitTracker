@@ -124,7 +124,7 @@ private void showSuccessDialog() {
     JDialog dialog = new JDialog(this, lang.getString("login.success"), true);
     dialog.setSize(300, 150);
     dialog.setLayout(new GridBagLayout());
-    dialog.setLocationRelativeTo(this); 
+    dialog.setLocationRelativeTo(this);
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.insets = new Insets(10, 10, 10, 10);
